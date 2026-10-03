@@ -1,97 +1,70 @@
 function [x,p,fval,flag] = di_qp(A,b,c,Q,x,tol,maxit,nnls_solver,tol_nnls)
-%   DI_QP               Differential inclusions approach to approximately
-%                       solving convex quadratic programs.
+%   DI_QP           Gradient inclusion solver for convex quadratic programs.
 %
-%   This function computes an approximate optimal solution of the following
-%   feasible convex quadratic program with a symmetric positive definite Q:
+%   Approximately solves, with Q symmetric positive definite,
 %
-%   (1) min_{x \in \Rn} (1/2)x'*Q*x + c'*x   subject to A*x <= b
+%   (1) min_{x in R^n}  (1/2)*x'*Q*x + c'*x   subject to  A*x <= b.
 %
-%   The differential inclusions approach computes the continuous-time
-%   solution of the differential inclusions associated to problem (1). On
-%   each local interval, the solution moves along the instantaneous descent
-%   direction d = -(Q*x + c + A_eq'*p), where A_eq = A(eqset,:) is the
-%   active inequality block and p >= 0 solves the NNLS subproblem
+%   On each piece the trajectory follows d = -(Q*x + c + A_eq'*p), where
+%   A_eq = A(eqset,:) is the active block and p >= 0 solves the NNLS
+%   subproblem min_{p >= 0} (1/2)*||A_eq'*p + Q*x + c||^2.  The step is the
+%   smaller of the time to hit a new constraint and the exact line search
+%   time ||d||^2/(d'*Q*d).  Each iteration costs one product Q*d and one
+%   NNLS solve.
 %
-%       min_{p >= 0}  (1/2)*||A_eq'*p + Q*x + c||^2.
+%   Unlike the LP case and the case Q = t*I, the method need not stop in
+%   finite time; it descends to an approximate KKT point.
 %
-%   The step size is the minimum of the time to hit a new constraint and
-%   the exact quadratic line search time ||d||^2 / (d'*Q*d).
-%
-%   Unlike the LP case and the case Q = t*I, the algorithm does not
-%   terminate in finite time in general; it is a descent algorithm that
-%   converges to an approximate KKT point.
-%
-%   The main computational cost per iteration is a matrix-vector product
-%   Q*x and a NNLS subproblem on the active face.
+%   This is Algorithm 2 of the paper for SPD Q only.  For SPSD Q, Algorithm
+%   2 also stops when the step is infinite and returns a direction of
+%   unboundedness; that exit is not implemented here.
 %
 % -------------------------------------------------------------------------
 %   INPUTS
-%       A           -   (m x n)-dimensional matrix A
-%       b           -   m-dimensional col data vector
-%       c           -   n-dimensional col data vector
-%       Q           -   Either an (n x n) symmetric positive definite matrix
-%                       or a function handle of the form v -> Q*v.
-%       x           -   (Optional) Initial feasible point satisfying
-%                       A*x <= b.
-%       tol         -   (Optional) Small number specifying the tolerance
-%                       (e.g., 1e-08). Default value is derived from the
-%                       Frobenius norm of A and the relative size of b.
-%       maxit       -   (Optional) Maximum number of iterations in the
-%                       outer loop. Default is max(1e6,100*n).
-%       nnls_solver -   (Optional) Function handle to an NNLS solver.
-%                       Two calling conventions are supported:
-%                         [q,d]      = solver(M, rhs, tol, p_warm)
-%                         [q,d,veff] = solver(M, rhs, tol, p_warm, v_warm)
-%                       The second form is used when the solver accepts a
-%                       momentum warm-start vector v_warm. The convention
-%                       is detected automatically via nargin(nnls_solver).
-%                       Default is @epgd_lsqnonneg.
-%       tol_nnls    -   (Optional) RELATIVE accuracy for the inner NNLS
-%                       subproblem, decoupled from the outer tolerance tol.
-%                       The NNLS right-hand side -grad is normalized to unit
-%                       norm before each solve, so tol_nnls is a scale-invariant
-%                       relative tolerance: the multiplier scale tracks ||grad||,
-%                       which varies by orders of magnitude across problems and
-%                       shrinks as a PDE mesh refines.  The inner solve must be
-%                       tight -- a loose NNLS returns a descent direction that
-%                       violates the active constraints' optimality
-%                       A(eqset,:)*d <= 0, making the outer active-set path
-%                       chatter (see the "bad"-row repair below).  Default is
-%                       1e-10.  Only the inner solve uses tol_nnls; the
-%                       active-set membership test and the outer convergence
-%                       test ||d|| < tol keep tol.
+%       A             -   (m x n) constraint matrix.
+%       b             -   m-dimensional column vector.
+%       c             -   n-dimensional cost column vector.
+%       Q             -   (n x n) symmetric positive definite matrix, or a
+%                         handle v -> Q*v.
+%       x             -   (Optional) Feasible start, A*x <= b.  Default is
+%                         a point from di_phase1.
+%       tol           -   (Optional) Tolerance.  Default is
+%                         min(1e-8, 100*eps*||A||_F*||b||).
+%       maxit         -   (Optional) Outer iteration cap.  Default is
+%                         max(1e6, 100*n).
+%       nnls_solver   -   (Optional) Handle to an NNLS solver, called as
+%                         [q,d] = solver(M,rhs,tol,p_warm), or as
+%                         [q,d,v] = solver(M,rhs,tol,p_warm,v_warm) when it
+%                         warm-starts the power iteration for ||M||_2;
+%                         nargin picks the form.  Default is @apgd_lsqnonneg.
+%       tol_nnls      -   (Optional) RELATIVE accuracy of the inner NNLS
+%                         solve, decoupled from tol.  The right-hand side
+%                         -grad is normalized before each solve, so the
+%                         tolerance is scale invariant.  Keep it tight: a
+%                         loose solve returns a direction that violates
+%                         A_eq*d <= 0 and the active set then chatters.
+%                         Default is 1e-10.  Membership tests and the
+%                         ||d|| < tol stop keep tol.
 %
 %   OUTPUTS
-%       x           -   n-dimensional approximate solution to problem (1).
-%                       Empty if infeasible.
-%       p           -   m-dimensional dual solution vector.
-%       fval        -   Value of the objective function at x.
-%       flag        -   Returns 0 if x is infeasible, returns -1 if the
-%                       outer loop reached maxit without converging, and
-%                       returns 1 if successful.
+%       x             -   Approximate solution; empty if infeasible.
+%       p             -   m-dimensional dual.
+%       fval          -   Objective value at x.
+%       flag          -   1 converged, 0 infeasible, -1 reached maxit.
 %
 % -------------------------------------------------------------------------
 %   QUICK EXAMPLE
-      % % Generate the data
       % rng(1);
-      % m = 200;
-      % n = 100;
-      % A      = randn(m, n);
-      % x0     = randn(n, 1);
-      % s      = abs(randn(m, 1)) + 1;
-      % b      = A * x0 + s;
-      % B      = randn(n, n);
-      % Q      = B' * B + eye(n);    % random SPD matrix
-      % c      = randn(n, 1);
+      % m = 200;  n = 100;
+      % A  = randn(m,n);
+      % x0 = randn(n,1);
+      % b  = A*x0 + abs(randn(m,1)) + 1;
+      % B  = randn(n);  Q = B'*B + eye(n);  c = randn(n,1);
       %
-      % tol    = 1e-08;
-      % opts   = optimoptions('quadprog', 'Display', 'off');
-      % [x_qp, fval_qp] = quadprog(Q, c, A, b, [], [], [], [], [], opts);
-      % [x_di, ~, fval_di, ~] = di_qp(A, b, c, Q, x0, tol);
-      %
-      % disp(['   fval_quadprog = ', num2str(fval_qp)])
-      % disp(['   fval_di_qp    = ', num2str(fval_di)])
+      % opts = optimoptions('quadprog','Display','off');
+      % [~, fval_qp]       = quadprog(Q, c, A, b, [],[],[],[],[], opts);
+      % [~, ~, fval_di, ~] = di_qp(A, b, c, Q, x0, 1e-8);
+      % fprintf('fval gap: %e\n', abs(fval_qp - fval_di))
 %
 % -------------------------------------------------------------------------
 
@@ -176,16 +149,14 @@ if any(-residual > tol)
 end
 
 %% Preconditioning
-% Ruiz equilibration: 10 steps of simultaneous row/column inf-norm scaling.
-% Produces d1 (m x 1) and d2 (n x 1) such that diag(d1)*A*diag(d2) has all
-% row and column inf-norms near 1. The change of variables x = diag(d2)*x_hat
-% transforms the QP to min (1/2)*x_hat'*Q_hat*x_hat + c_hat'*x_hat s.t.
-% A_hat*x_hat <= b_hat, with A_hat = diag(d1)*A*diag(d2), b_hat = d1.*b,
-% c_hat = d2.*c, Q_hat = diag(d2)*Q*diag(d2).
-% The dual variable transforms as p = diag(d1)*p_hat.
+% Ruiz equilibration: 10 sweeps of row/column inf-norm scaling, giving d1
+% and d2 with diag(d1)*A*diag(d2) of inf-norms near 1.  Under x = diag(d2)*xh
+% the QP keeps its form with A_hat = diag(d1)*A*diag(d2), b_hat = d1.*b,
+% c_hat = d2.*c, Q_hat = diag(d2)*Q*diag(d2), and the dual maps back as
+% p = diag(d1)*ph.
 %
-% Reference: Ruiz, Daniel. A scaling algorithm to equilibrate both rows and
-% columns norms in matrices. No. RAL-TR-2001-034. CM-P00040415, 2001.
+% Reference: D. Ruiz, A scaling algorithm to equilibrate both rows and
+% columns norms in matrices, RAL-TR-2001-034, 2001.
 %
 
 
@@ -218,11 +189,9 @@ eqset = abs(residual) < tol;
 neff  = sum(eqset);
 v     = zeros(m,1);
 
-% Gradient of the objective at the current iterate.  Maintained incrementally
-% inside the loop: Q is linear and x advances by timestep*d, so
-% grad <- grad + timestep*(Q*d), and Q*d is already formed for the line search.
-% This removes the standalone Q*x evaluation, roughly halving the number of Q
-% applications (the dominant cost) per iteration.
+% Objective gradient, then maintained incrementally: x advances by
+% timestep*d, so grad <- grad + timestep*(Q*d) with Q*d already formed for
+% the line search.  This halves the Q applications, the dominant cost.
 grad = Qfun(x) + c;
 
 count = 0;
@@ -232,12 +201,9 @@ while true
     % Solve the NNLS subproblem on the active face to obtain the dual
     % variable q and the instantaneous descent direction d.
     if neff > 0
-        % Normalize the NNLS right-hand side to unit norm so tol_nnls is a
-        % relative, scale-invariant accuracy: the multiplier scale tracks
-        % ||grad||, which varies by orders of magnitude across problems and
-        % shrinks as a PDE mesh refines.  (Ruiz equilibration above already made
-        % the active block A(eqset,:) O(1)-scaled.)  NNLS is positively
-        % homogeneous in the RHS, so q and the residual d rescale by s.
+        % Normalize the right-hand side so tol_nnls is scale invariant: the
+        % multiplier scale tracks ||grad||, which shrinks as a mesh refines.
+        % NNLS is positively homogeneous, so q and d rescale by s.
         s   = max(norm(grad), realmin);
         rhs = -grad / s;
         if use_v

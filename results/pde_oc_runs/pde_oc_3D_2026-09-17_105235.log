@@ -1,0 +1,416 @@
+Benchmark: 3-D Poisson OC, control bounds only, consistent Q1 mass, mesh sweep.
+  pair 1:  beta = 0.0001,  u in [0, 20]
+  pair 2:  beta = 0.01,  u in [0, 1]
+  Desired state: Gaussian bump at (0.5, 0.5, 0.5).
+
+Solver availability:
+  Solver      Status        Size limit
+  ------------------------------------------
+  MOSEK       found         no limit
+  Gurobi      found         no limit
+  HiGHS       found         no limit
+  NSred       found         no limit
+
+
+################  pair 1 of 2:  beta = 0.0001,  u in [0, 20]  ################
+
+=== n = 3  (N = 27 DOFs,  h = 1/4) ===
+
+  Running MOSEK...
+  MOSEK   t =   0.002 s,  fval = -1.0637882879e-03,  r_p = 1.21e-11 (rel 1.09e-10),  r_d = 1.74e-13 (rel 5.99e-11),  r_g = 2.25e-13 (rel 1.14e-10),  z_min = 0.00e+00  (flag=0)
+
+  Running Gurobi...
+  Gurobi  t =   0.003 s,  fval = -1.0637882879e-03,  r_p = 2.07e-17 (rel 1.85e-16),  r_d = 5.42e-19 (rel 1.87e-16),  r_g = 5.42e-20 (rel 2.75e-17),  z_min = 0.00e+00  (status=OPTIMAL)
+
+  Running HiGHS (IPM)...
+  HiGHS   t =   0.005 s,  fval = -1.0637882877e-03,  r_p = 5.32e-17 (rel 4.77e-16),  r_d = 8.67e-19 (rel 2.98e-16),  r_g = 2.34e-13 (rel 1.18e-10),  z_min = 0.00e+00  (status=Optimal)
+
+  Running di_qp (null-space reduction)...
+  NSred diagnostics: min(u)=0.0000, max(u)=20.0000, ub_viol=0.00e+00, lb_viol=0.00e+00, n_ub_viol=0, n_lb_viol=0
+  NSred   t =   0.002 s,  fval = -1.0637882879e-03,  r_p = 6.43e-17 (rel 5.76e-16),  r_d = 2.60e-18 (rel 8.95e-16),  r_g = 8.67e-19 (rel 4.39e-16),  z_min = 0.00e+00  (flag=1)
+
+  Reference: pcg on the free block of the final active set of di_qp...
+  Reference: pass = 1,  n_lb = 20,  n_ub = 1,  n_free = 6,  pcg flag = 0, iters = 1, relres = 1.17e-15 (true 1.43e-15),  slack_min = 2.74e+00,  sign_viol = 0.00e+00,  t = 0.00 s
+  mosek    vs reference:  ||u - u_ref||_inf = 1.22e-11,  ||y - y_ref||_inf = 2.39e-11,  f - f_ref = +3.10e-16
+  gurobi   vs reference:  ||u - u_ref||_inf = 3.82e-14,  ||y - y_ref||_inf = 2.50e-16,  f - f_ref = +2.17e-19
+  highs    vs reference:  ||u - u_ref||_inf = 6.90e-09,  ||y - y_ref||_inf = 3.36e-11,  f - f_ref = +1.88e-13
+  nsred    vs reference:  ||u - u_ref||_inf = 4.13e-14,  ||y - y_ref||_inf = 2.29e-16,  f - f_ref = +8.67e-19
+
+=== n = 7  (N = 343 DOFs,  h = 1/8) ===
+
+  Running MOSEK...
+  MOSEK   t =   0.077 s,  fval = -5.3120731473e-04,  r_p = 8.50e-15 (rel 3.20e-13),  r_d = 5.57e-12 (rel 7.93e-09),  r_g = 2.17e-13 (rel 2.05e-10),  z_min = 0.00e+00  (flag=0)
+
+  Running Gurobi...
+  Gurobi  t =   0.055 s,  fval = -5.3120731491e-04,  r_p = 2.81e-16 (rel 1.06e-14),  r_d = 1.08e-19 (rel 1.54e-16),  r_g = 1.30e-18 (rel 1.23e-15),  z_min = 0.00e+00  (status=OPTIMAL)
+
+  Running HiGHS (IPM)...
+  HiGHS   t =   0.027 s,  fval = -5.3120731491e-04,  r_p = 1.82e-17 (rel 6.83e-16),  r_d = 3.25e-19 (rel 4.63e-16),  r_g = 1.67e-15 (rel 1.58e-12),  z_min = 0.00e+00  (status=Optimal)
+
+  Running di_qp (null-space reduction)...
+  NSred diagnostics: min(u)=-0.0000, max(u)=20.0000, ub_viol=0.00e+00, lb_viol=2.22e-16, n_ub_viol=0, n_lb_viol=2
+  NSred   t =   0.010 s,  fval = -5.3120731491e-04,  r_p = 2.22e-16 (rel 1.72e-15),  r_d = 1.95e-14 (rel 2.77e-11),  r_g = 6.45e-14 (rel 6.09e-11),  z_min = 0.00e+00  (flag=1)
+
+  Reference: pcg on the free block of the final active set of di_qp...
+  Reference: pass = 1,  n_lb = 324,  n_ub = 1,  n_free = 18,  pcg flag = 0, iters = 2, relres = 4.38e-15 (true 4.35e-15),  slack_min = 4.78e+00,  sign_viol = 0.00e+00,  t = 0.00 s
+  mosek    vs reference:  ||u - u_ref||_inf = 6.64e-08,  ||y - y_ref||_inf = 8.13e-11,  f - f_ref = +1.79e-13
+  gurobi   vs reference:  ||u - u_ref||_inf = 3.25e-12,  ||y - y_ref||_inf = 4.11e-15,  f - f_ref = +6.51e-19
+  highs    vs reference:  ||u - u_ref||_inf = 2.95e-10,  ||y - y_ref||_inf = 4.60e-13,  f - f_ref = +1.61e-15
+  nsred    vs reference:  ||u - u_ref||_inf = 6.66e-07,  ||y - y_ref||_inf = 8.43e-10,  f - f_ref = +2.17e-18
+
+=== n = 15  (N = 3375 DOFs,  h = 1/16) ===
+
+  Running MOSEK...
+  MOSEK   t =   1.752 s,  fval = -6.4682538304e-04,  r_p = 3.73e-13 (rel 7.71e-11),  r_d = 9.13e-11 (rel 6.02e-07),  r_g = 1.44e-10 (rel 1.12e-07),  z_min = 0.00e+00  (flag=0)
+
+  Running Gurobi...
+  Gurobi  t =   2.271 s,  fval = -6.4682540605e-04,  r_p = 8.92e-18 (rel 1.84e-15),  r_d = 1.68e-16 (rel 1.10e-12),  r_g = 1.92e-18 (rel 1.49e-15),  z_min = 0.00e+00  (status=OPTIMAL)
+
+  Running HiGHS (IPM)...
+  HiGHS   t =   0.569 s,  fval = -6.4682540605e-04,  r_p = 1.14e-17 (rel 2.36e-15),  r_d = 1.08e-19 (rel 7.15e-16),  r_g = 2.12e-15 (rel 1.65e-12),  z_min = 0.00e+00  (status=Optimal)
+
+  Running di_qp (null-space reduction)...
+  NSred diagnostics: min(u)=-0.0000, max(u)=20.0000, ub_viol=0.00e+00, lb_viol=6.94e-18, n_ub_viol=0, n_lb_viol=2
+  NSred   t =   0.243 s,  fval = -6.4682540605e-04,  r_p = 3.55e-17 (rel 7.33e-15),  r_d = 1.86e-15 (rel 1.23e-11),  r_g = 3.04e-13 (rel 2.36e-10),  z_min = 0.00e+00  (flag=1)
+
+  Reference: pcg on the free block of the final active set of di_qp...
+  Reference: pass = 1,  n_lb = 3204,  n_ub = 19,  n_free = 152,  pcg flag = 0, iters = 5, relres = 3.25e-15 (true 3.31e-15),  slack_min = 1.34e+00,  sign_viol = 0.00e+00,  t = 0.01 s
+  mosek    vs reference:  ||u - u_ref||_inf = 1.64e-04,  ||y - y_ref||_inf = 5.01e-08,  f - f_ref = +2.31e-11
+  gurobi   vs reference:  ||u - u_ref||_inf = 9.27e-11,  ||y - y_ref||_inf = 3.61e-14,  f - f_ref = +6.51e-19
+  highs    vs reference:  ||u - u_ref||_inf = 6.19e-09,  ||y - y_ref||_inf = 2.39e-12,  f - f_ref = +2.06e-15
+  nsred    vs reference:  ||u - u_ref||_inf = 7.84e-07,  ||y - y_ref||_inf = 1.37e-10,  f - f_ref = +2.60e-18
+
+=== n = 31  (N = 29791 DOFs,  h = 1/32) ===
+
+  Running MOSEK...
+  MOSEK   t = 118.642 s,  fval = -6.8478076867e-04,  r_p = 2.57e-13 (rel 4.21e-10),  r_d = 4.11e-13 (rel 1.78e-08),  r_g = 4.67e-11 (rel 3.44e-08),  z_min = 0.00e+00  (flag=0)
+
+  Running Gurobi...
+  Gurobi  t = 260.928 s,  fval = -6.8478083355e-04,  r_p = 2.83e-16 (rel 4.64e-13),  r_d = 3.58e-16 (rel 1.55e-11),  r_g = 4.22e-16 (rel 3.11e-13),  z_min = 0.00e+00  (status=OPTIMAL)
+
+  Running HiGHS (IPM)...
+  HiGHS   t =  23.256 s,  fval = -6.8478083355e-04,  r_p = 4.78e-18 (rel 7.84e-15),  r_d = 1.30e-18 (rel 5.63e-14),  r_g = 3.56e-15 (rel 2.62e-12),  z_min = 0.00e+00  (status=Optimal)
+
+  Running di_qp (null-space reduction)...
+  NSred diagnostics: min(u)=-0.0000, max(u)=20.0000, ub_viol=0.00e+00, lb_viol=6.94e-18, n_ub_viol=0, n_lb_viol=43
+  NSred   t =  22.438 s,  fval = -6.8478083355e-04,  r_p = 4.42e-17 (rel 7.24e-14),  r_d = 8.87e-17 (rel 3.85e-12),  r_g = 1.58e-13 (rel 1.16e-10),  z_min = 0.00e+00  (flag=1)
+
+  Reference: pcg on the free block of the final active set of di_qp...
+  Reference: pass = 1,  n_lb = 28264,  n_ub = 93,  n_free = 1434,  pcg flag = 0, iters = 9, relres = 4.41e-15 (true 4.43e-15),  slack_min = 8.45e-02,  sign_viol = 0.00e+00,  t = 0.27 s
+  mosek    vs reference:  ||u - u_ref||_inf = 1.48e-03,  ||y - y_ref||_inf = 2.35e-07,  f - f_ref = +6.51e-11
+  gurobi   vs reference:  ||u - u_ref||_inf = 9.39e-10,  ||y - y_ref||_inf = 1.22e-13,  f - f_ref = +1.08e-19
+  highs    vs reference:  ||u - u_ref||_inf = 6.97e-06,  ||y - y_ref||_inf = 7.98e-10,  f - f_ref = +3.51e-15
+  nsred    vs reference:  ||u - u_ref||_inf = 5.01e-07,  ||y - y_ref||_inf = 3.04e-11,  f - f_ref = +4.99e-18
+
+
+Summary, pair 1:  beta = 0.0001,  u in [0, 20]
+
+=== n = 3,  N = 27,  h = 1/4 ===
+
+  Solver                Runtime (s)           r_p     r_p (rel)           r_d     r_d (rel)           r_g     r_g (rel)
+  ---------------------------------------------------------------------------------------------------------------------
+  NSred (di_qp)               0.002      6.43e-17      5.76e-16      2.60e-18      8.95e-16      8.67e-19      4.39e-16
+  MOSEK                       0.002      1.21e-11      1.09e-10      1.74e-13      5.99e-11      2.25e-13      1.14e-10
+  Gurobi                      0.003      2.07e-17      1.85e-16      5.42e-19      1.87e-16      5.42e-20      2.75e-17
+  HiGHS                       0.005      5.32e-17      4.77e-16      8.67e-19      2.98e-16      2.34e-13      1.18e-10
+
+  SGM ratios (relative to best at n = 3):
+  Solver                       Runtime     r_p (rel)     r_d (rel)     r_g (rel)
+  ------------------------------------------------------------------------------
+  NSred (di_qp)              1.000e+00     3.108e+00     4.800e+00     1.600e+01
+  MOSEK                      1.001e+00     5.866e+05     3.212e+05     4.154e+06
+  Gurobi                     1.311e+00     1.000e+00     1.000e+00     1.000e+00
+  HiGHS                      2.314e+00     2.572e+00     1.600e+00     4.311e+06
+
+  Reference (pass = 1, pcg iters = 1, relres = 1.4e-15, n_lb/n_ub/n_free = 20/1/6):
+  Solver                  ||u-u_ref||_inf  ||y-y_ref||_inf       f - f_ref
+  ----------------------------------------------------------------------
+  NSred (di_qp)              4.130e-14     2.290e-16     8.674e-19
+  MOSEK                      1.222e-11     2.394e-11     3.099e-16
+  Gurobi                     3.819e-14     2.498e-16     2.168e-19
+  HiGHS                      6.897e-09     3.359e-11     1.884e-13
+
+
+
+=== n = 7,  N = 343,  h = 1/8 ===
+
+  Solver                Runtime (s)           r_p     r_p (rel)           r_d     r_d (rel)           r_g     r_g (rel)
+  ---------------------------------------------------------------------------------------------------------------------
+  NSred (di_qp)               0.010      2.22e-16      1.72e-15      1.95e-14      2.77e-11      6.45e-14      6.09e-11
+  MOSEK                       0.077      8.50e-15      3.20e-13      5.57e-12      7.93e-09      2.17e-13      2.05e-10
+  Gurobi                      0.055      2.81e-16      1.06e-14      1.08e-19      1.54e-16      1.30e-18      1.23e-15
+  HiGHS                       0.027      1.82e-17      6.83e-16      3.25e-19      4.63e-16      1.67e-15      1.58e-12
+
+  SGM ratios (relative to best at n = 7):
+  Solver                       Runtime     r_p (rel)     r_d (rel)     r_g (rel)
+  ------------------------------------------------------------------------------
+  NSred (di_qp)              1.000e+00     2.523e+00     1.795e+05     4.948e+04
+  MOSEK                      7.794e+00     4.685e+02     5.140e+07     1.667e+05
+  Gurobi                     5.563e+00     1.550e+01     1.000e+00     1.000e+00
+  HiGHS                      2.687e+00     1.000e+00     3.000e+00     1.284e+03
+
+  Reference (pass = 1, pcg iters = 2, relres = 4.3e-15, n_lb/n_ub/n_free = 324/1/18):
+  Solver                  ||u-u_ref||_inf  ||y-y_ref||_inf       f - f_ref
+  ----------------------------------------------------------------------
+  NSred (di_qp)              6.656e-07     8.431e-10     2.168e-18
+  MOSEK                      6.637e-08     8.129e-11     1.790e-13
+  Gurobi                     3.248e-12     4.108e-15     6.505e-19
+  HiGHS                      2.954e-10     4.600e-13     1.612e-15
+
+
+
+=== n = 15,  N = 3375,  h = 1/16 ===
+
+  Solver                Runtime (s)           r_p     r_p (rel)           r_d     r_d (rel)           r_g     r_g (rel)
+  ---------------------------------------------------------------------------------------------------------------------
+  NSred (di_qp)               0.243      3.55e-17      7.33e-15      1.86e-15      1.23e-11      3.04e-13      2.36e-10
+  MOSEK                       1.752      3.73e-13      7.71e-11      9.13e-11      6.02e-07      1.44e-10      1.12e-07
+  Gurobi                      2.271      8.92e-18      1.84e-15      1.68e-16      1.10e-12      1.92e-18      1.49e-15
+  HiGHS                       0.569      1.14e-17      2.36e-15      1.08e-19      7.15e-16      2.12e-15      1.65e-12
+
+  SGM ratios (relative to best at n = 15):
+  Solver                       Runtime     r_p (rel)     r_d (rel)     r_g (rel)
+  ------------------------------------------------------------------------------
+  NSred (di_qp)              1.000e+00     3.980e+00     1.718e+04     1.580e+05
+  MOSEK                      7.223e+00     4.184e+04     8.418e+08     7.508e+07
+  Gurobi                     9.360e+00     1.000e+00     1.546e+03     1.000e+00
+  HiGHS                      2.347e+00     1.281e+00     1.000e+00     1.102e+03
+
+  Reference (pass = 1, pcg iters = 5, relres = 3.3e-15, n_lb/n_ub/n_free = 3204/19/152):
+  Solver                  ||u-u_ref||_inf  ||y-y_ref||_inf       f - f_ref
+  ----------------------------------------------------------------------
+  NSred (di_qp)              7.841e-07     1.371e-10     2.602e-18
+  MOSEK                      1.636e-04     5.008e-08     2.305e-11
+  Gurobi                     9.266e-11     3.614e-14     6.505e-19
+  HiGHS                      6.193e-09     2.388e-12     2.064e-15
+
+
+
+=== n = 31,  N = 29791,  h = 1/32 ===
+
+  Solver                Runtime (s)           r_p     r_p (rel)           r_d     r_d (rel)           r_g     r_g (rel)
+  ---------------------------------------------------------------------------------------------------------------------
+  NSred (di_qp)              22.438      4.42e-17      7.24e-14      8.87e-17      3.85e-12      1.58e-13      1.16e-10
+  MOSEK                     118.642      2.57e-13      4.21e-10      4.11e-13      1.78e-08      4.67e-11      3.44e-08
+  Gurobi                    260.928      2.83e-16      4.64e-13      3.58e-16      1.55e-11      4.22e-16      3.11e-13
+  HiGHS                      23.256      4.78e-18      7.84e-15      1.30e-18      5.63e-14      3.56e-15      2.62e-12
+
+  SGM ratios (relative to best at n = 31):
+  Solver                       Runtime     r_p (rel)     r_d (rel)     r_g (rel)
+  ------------------------------------------------------------------------------
+  NSred (di_qp)              1.000e+00     9.236e+00     6.829e+01     3.739e+02
+  MOSEK                      5.288e+00     5.372e+04     3.166e+05     1.107e+05
+  Gurobi                     1.163e+01     5.921e+01     2.760e+02     1.000e+00
+  HiGHS                      1.036e+00     1.000e+00     1.000e+00     8.430e+00
+
+  Reference (pass = 1, pcg iters = 9, relres = 4.4e-15, n_lb/n_ub/n_free = 28264/93/1434):
+  Solver                  ||u-u_ref||_inf  ||y-y_ref||_inf       f - f_ref
+  ----------------------------------------------------------------------
+  NSred (di_qp)              5.006e-07     3.043e-11     4.987e-18
+  MOSEK                      1.476e-03     2.353e-07     6.513e-11
+  Gurobi                     9.393e-10     1.221e-13     1.084e-19
+  HiGHS                      6.972e-06     7.981e-10     3.507e-15
+
+
+
+################  pair 2 of 2:  beta = 0.01,  u in [0, 1]  ################
+
+=== n = 3  (N = 27 DOFs,  h = 1/4) ===
+
+  Running MOSEK...
+  MOSEK   t =   0.001 s,  fval = -8.3768272776e-05,  r_p = 3.09e-13 (rel 4.88e-11),  r_d = 1.13e-14 (rel 2.46e-12),  r_g = 3.53e-14 (rel 2.11e-10),  z_min = 0.00e+00  (flag=0)
+
+  Running Gurobi...
+  Gurobi  t =   0.002 s,  fval = -8.3768272780e-05,  r_p = 7.28e-18 (rel 1.15e-15),  r_d = 5.20e-18 (rel 1.13e-15),  r_g = 4.89e-19 (rel 2.92e-15),  z_min = 0.00e+00  (status=OPTIMAL)
+
+  Running HiGHS (IPM)...
+  HiGHS   t =   0.004 s,  fval = -8.3768272780e-05,  r_p = 4.52e-18 (rel 7.14e-16),  r_d = 2.60e-18 (rel 5.65e-16),  r_g = 3.71e-14 (rel 2.21e-10),  z_min = 0.00e+00  (status=Optimal)
+
+  Running di_qp (null-space reduction)...
+  NSred diagnostics: min(u)=0.0852, max(u)=0.8206, ub_viol=0.00e+00, lb_viol=0.00e+00, n_ub_viol=0, n_lb_viol=0
+  NSred   t =   0.001 s,  fval = -8.3768272780e-05,  r_p = 1.33e-17 (rel 2.11e-15),  r_d = 3.28e-13 (rel 7.14e-11),  r_g = 4.66e-13 (rel 2.78e-09),  z_min = 0.00e+00  (flag=1)
+
+  Reference: pcg on the free block of the final active set of di_qp...
+  Reference: pass = 1,  n_lb = 0,  n_ub = 0,  n_free = 27,  pcg flag = 0, iters = 2, relres = 6.90e-16 (true 6.90e-16),  slack_min = 8.52e-02,  sign_viol = 0.00e+00,  t = 0.00 s
+  mosek    vs reference:  ||u - u_ref||_inf = 1.21e-09,  ||y - y_ref||_inf = 5.92e-12,  f - f_ref = -1.36e-20
+  gurobi   vs reference:  ||u - u_ref||_inf = 2.77e-14,  ||y - y_ref||_inf = 1.41e-16,  f - f_ref = -8.13e-20
+  highs    vs reference:  ||u - u_ref||_inf = 3.72e-10,  ||y - y_ref||_inf = 3.04e-12,  f - f_ref = +4.07e-20
+  nsred    vs reference:  ||u - u_ref||_inf = 1.66e-08,  ||y - y_ref||_inf = 7.48e-11,  f - f_ref = +1.36e-20
+
+=== n = 7  (N = 343 DOFs,  h = 1/8) ===
+
+  Running MOSEK...
+  MOSEK   t =   0.070 s,  fval = -3.8655398382e-05,  r_p = 4.70e-12 (rel 5.95e-09),  r_d = 7.58e-11 (rel 8.03e-08),  r_g = 4.84e-11 (rel 6.27e-07),  z_min = 0.00e+00  (flag=0)
+
+  Running Gurobi...
+  Gurobi  t =   0.054 s,  fval = -3.8655398043e-05,  r_p = 1.36e-17 (rel 1.72e-14),  r_d = 5.42e-19 (rel 5.74e-16),  r_g = 2.47e-18 (rel 3.19e-14),  z_min = 0.00e+00  (status=OPTIMAL)
+
+  Running HiGHS (IPM)...
+  HiGHS   t =   0.034 s,  fval = -3.8655398043e-05,  r_p = 1.34e-18 (rel 1.69e-15),  r_d = 1.19e-18 (rel 1.26e-15),  r_g = 2.88e-15 (rel 3.73e-11),  z_min = 0.00e+00  (status=Optimal)
+
+  Running di_qp (null-space reduction)...
+  NSred diagnostics: min(u)=0.0056, max(u)=0.5507, ub_viol=0.00e+00, lb_viol=0.00e+00, n_ub_viol=0, n_lb_viol=0
+  NSred   t =   0.008 s,  fval = -3.8655398043e-05,  r_p = 2.63e-18 (rel 3.33e-15),  r_d = 1.35e-14 (rel 1.43e-11),  r_g = 1.04e-13 (rel 1.34e-09),  z_min = 0.00e+00  (flag=1)
+
+  Reference: pcg on the free block of the final active set of di_qp...
+  Reference: pass = 1,  n_lb = 0,  n_ub = 0,  n_free = 343,  pcg flag = 0, iters = 6, relres = 4.72e-15 (true 4.72e-15),  slack_min = 5.58e-03,  sign_viol = 0.00e+00,  t = 0.00 s
+  mosek    vs reference:  ||u - u_ref||_inf = 1.40e-05,  ||y - y_ref||_inf = 2.20e-08,  f - f_ref = +3.91e-15
+  gurobi   vs reference:  ||u - u_ref||_inf = 1.18e-11,  ||y - y_ref||_inf = 1.70e-14,  f - f_ref = +1.36e-20
+  highs    vs reference:  ||u - u_ref||_inf = 8.82e-10,  ||y - y_ref||_inf = 1.46e-12,  f - f_ref = -6.78e-21
+  nsred    vs reference:  ||u - u_ref||_inf = 7.74e-09,  ||y - y_ref||_inf = 1.51e-11,  f - f_ref = +1.36e-20
+
+=== n = 15  (N = 3375 DOFs,  h = 1/16) ===
+
+  Running MOSEK...
+  MOSEK   t =   1.768 s,  fval = -4.3207598406e-05,  r_p = 3.61e-12 (rel 2.78e-08),  r_d = 4.55e-12 (rel 2.37e-08),  r_g = 1.64e-11 (rel 1.90e-07),  z_min = 0.00e+00  (flag=0)
+
+  Running Gurobi...
+  Gurobi  t =   3.448 s,  fval = -4.3207596387e-05,  r_p = 2.85e-18 (rel 2.20e-14),  r_d = 1.52e-17 (rel 7.95e-14),  r_g = 2.17e-19 (rel 2.51e-15),  z_min = 0.00e+00  (status=OPTIMAL)
+
+  Running HiGHS (IPM)...
+  HiGHS   t =   0.833 s,  fval = -4.3207596387e-05,  r_p = 5.75e-19 (rel 4.44e-15),  r_d = 1.75e-17 (rel 9.10e-14),  r_g = 1.35e-16 (rel 1.56e-12),  z_min = 0.00e+00  (status=Optimal)
+
+  Running di_qp (null-space reduction)...
+  NSred diagnostics: min(u)=0.0006, max(u)=0.5839, ub_viol=0.00e+00, lb_viol=0.00e+00, n_ub_viol=0, n_lb_viol=0
+  NSred   t =   0.155 s,  fval = -4.3207596387e-05,  r_p = 2.14e-18 (rel 1.65e-14),  r_d = 4.82e-16 (rel 2.51e-12),  r_g = 4.54e-14 (rel 5.25e-10),  z_min = 0.00e+00  (flag=1)
+
+  Reference: pcg on the free block of the final active set of di_qp...
+  Reference: pass = 1,  n_lb = 0,  n_ub = 0,  n_free = 3375,  pcg flag = 0, iters = 14, relres = 8.75e-15 (true 8.75e-15),  slack_min = 6.46e-04,  sign_viol = 0.00e+00,  t = 0.02 s
+  mosek    vs reference:  ||u - u_ref||_inf = 8.79e-05,  ||y - y_ref||_inf = 3.95e-08,  f - f_ref = +2.32e-14
+  gurobi   vs reference:  ||u - u_ref||_inf = 1.18e-11,  ||y - y_ref||_inf = 4.26e-15,  f - f_ref = -1.36e-20
+  highs    vs reference:  ||u - u_ref||_inf = 1.66e-08,  ||y - y_ref||_inf = 5.96e-12,  f - f_ref = +0.00e+00
+  nsred    vs reference:  ||u - u_ref||_inf = 3.52e-09,  ||y - y_ref||_inf = 4.78e-12,  f - f_ref = +0.00e+00
+
+=== n = 31  (N = 29791 DOFs,  h = 1/32) ===
+
+  Running MOSEK...
+  MOSEK   t = 119.938 s,  fval = -4.4566221827e-05,  r_p = 1.83e-12 (rel 1.03e-07),  r_d = 7.34e-12 (rel 2.59e-07),  r_g = 6.70e-12 (rel 7.52e-08),  z_min = 0.00e+00  (flag=0)
+
+  Running Gurobi...
+  Gurobi  t = 175.887 s,  fval = -4.4566214067e-05,  r_p = 3.98e-16 (rel 2.24e-11),  r_d = 3.73e-17 (rel 1.31e-12),  r_g = 3.73e-16 (rel 4.19e-12),  z_min = 0.00e+00  (status=OPTIMAL)
+
+  Running HiGHS (IPM)...
+  HiGHS   t =  30.334 s,  fval = -4.4566214067e-05,  r_p = 2.79e-19 (rel 1.57e-14),  r_d = 1.93e-15 (rel 6.80e-11),  r_g = 9.79e-17 (rel 1.10e-12),  z_min = 0.00e+00  (status=Optimal)
+
+  Running di_qp (null-space reduction)...
+  NSred diagnostics: min(u)=0.0001, max(u)=0.5970, ub_viol=0.00e+00, lb_viol=0.00e+00, n_ub_viol=0, n_lb_viol=0
+  NSred   t =   3.864 s,  fval = -4.4566214067e-05,  r_p = 2.50e-18 (rel 1.41e-13),  r_d = 6.62e-17 (rel 2.33e-12),  r_g = 1.86e-14 (rel 2.09e-10),  z_min = 0.00e+00  (flag=1)
+
+  Reference: pcg on the free block of the final active set of di_qp...
+  Reference: pass = 1,  n_lb = 0,  n_ub = 0,  n_free = 29791,  pcg flag = 0, iters = 14, relres = 8.86e-15 (true 8.86e-15),  slack_min = 7.92e-05,  sign_viol = 0.00e+00,  t = 0.38 s
+  mosek    vs reference:  ||u - u_ref||_inf = 2.31e-04,  ||y - y_ref||_inf = 5.60e-08,  f - f_ref = +3.36e-13
+  gurobi   vs reference:  ||u - u_ref||_inf = 2.62e-10,  ||y - y_ref||_inf = 3.66e-14,  f - f_ref = +6.78e-21
+  highs    vs reference:  ||u - u_ref||_inf = 1.67e-06,  ||y - y_ref||_inf = 1.49e-10,  f - f_ref = +8.00e-19
+  nsred    vs reference:  ||u - u_ref||_inf = 4.32e-09,  ||y - y_ref||_inf = 1.93e-12,  f - f_ref = -6.78e-21
+
+
+Summary, pair 2:  beta = 0.01,  u in [0, 1]
+
+=== n = 3,  N = 27,  h = 1/4 ===
+
+  Solver                Runtime (s)           r_p     r_p (rel)           r_d     r_d (rel)           r_g     r_g (rel)
+  ---------------------------------------------------------------------------------------------------------------------
+  NSred (di_qp)               0.001      1.33e-17      2.11e-15      3.28e-13      7.14e-11      4.66e-13      2.78e-09
+  MOSEK                       0.001      3.09e-13      4.88e-11      1.13e-14      2.46e-12      3.53e-14      2.11e-10
+  Gurobi                      0.002      7.28e-18      1.15e-15      5.20e-18      1.13e-15      4.89e-19      2.92e-15
+  HiGHS                       0.004      4.52e-18      7.14e-16      2.60e-18      5.65e-16      3.71e-14      2.21e-10
+
+  SGM ratios (relative to best at n = 3):
+  Solver                       Runtime     r_p (rel)     r_d (rel)     r_g (rel)
+  ------------------------------------------------------------------------------
+  NSred (di_qp)              1.000e+00     2.951e+00     1.262e+05     9.534e+05
+  MOSEK                      1.632e+00     6.830e+04     4.347e+03     7.221e+04
+  Gurobi                     2.805e+00     1.611e+00     2.000e+00     1.000e+00
+  HiGHS                      6.276e+00     1.000e+00     1.000e+00     7.579e+04
+
+  Reference (pass = 1, pcg iters = 2, relres = 6.9e-16, n_lb/n_ub/n_free = 0/0/27):
+  Solver                  ||u-u_ref||_inf  ||y-y_ref||_inf       f - f_ref
+  ----------------------------------------------------------------------
+  NSred (di_qp)              1.665e-08     7.480e-11     1.355e-20
+  MOSEK                      1.210e-09     5.923e-12    -1.355e-20
+  Gurobi                     2.769e-14     1.405e-16    -8.132e-20
+  HiGHS                      3.716e-10     3.039e-12     4.066e-20
+
+
+
+=== n = 7,  N = 343,  h = 1/8 ===
+
+  Solver                Runtime (s)           r_p     r_p (rel)           r_d     r_d (rel)           r_g     r_g (rel)
+  ---------------------------------------------------------------------------------------------------------------------
+  NSred (di_qp)               0.008      2.63e-18      3.33e-15      1.35e-14      1.43e-11      1.04e-13      1.34e-09
+  MOSEK                       0.070      4.70e-12      5.95e-09      7.58e-11      8.03e-08      4.84e-11      6.27e-07
+  Gurobi                      0.054      1.36e-17      1.72e-14      5.42e-19      5.74e-16      2.47e-18      3.19e-14
+  HiGHS                       0.034      1.34e-18      1.69e-15      1.19e-18      1.26e-15      2.88e-15      3.73e-11
+
+  SGM ratios (relative to best at n = 7):
+  Solver                       Runtime     r_p (rel)     r_d (rel)     r_g (rel)
+  ------------------------------------------------------------------------------
+  NSred (di_qp)              1.000e+00     1.969e+00     2.497e+04     4.203e+04
+  MOSEK                      8.487e+00     3.513e+06     1.398e+08     1.964e+07
+  Gurobi                     6.602e+00     1.017e+01     1.000e+00     1.000e+00
+  HiGHS                      4.176e+00     1.000e+00     2.200e+00     1.168e+03
+
+  Reference (pass = 1, pcg iters = 6, relres = 4.7e-15, n_lb/n_ub/n_free = 0/0/343):
+  Solver                  ||u-u_ref||_inf  ||y-y_ref||_inf       f - f_ref
+  ----------------------------------------------------------------------
+  NSred (di_qp)              7.742e-09     1.512e-11     1.355e-20
+  MOSEK                      1.395e-05     2.196e-08     3.909e-15
+  Gurobi                     1.184e-11     1.702e-14     1.355e-20
+  HiGHS                      8.823e-10     1.464e-12    -6.776e-21
+
+
+
+=== n = 15,  N = 3375,  h = 1/16 ===
+
+  Solver                Runtime (s)           r_p     r_p (rel)           r_d     r_d (rel)           r_g     r_g (rel)
+  ---------------------------------------------------------------------------------------------------------------------
+  NSred (di_qp)               0.155      2.14e-18      1.65e-14      4.82e-16      2.51e-12      4.54e-14      5.25e-10
+  MOSEK                       1.768      3.61e-12      2.78e-08      4.55e-12      2.37e-08      1.64e-11      1.90e-07
+  Gurobi                      3.448      2.85e-18      2.20e-14      1.52e-17      7.95e-14      2.17e-19      2.51e-15
+  HiGHS                       0.833      5.75e-19      4.44e-15      1.75e-17      9.10e-14      1.35e-16      1.56e-12
+
+  SGM ratios (relative to best at n = 15):
+  Solver                       Runtime     r_p (rel)     r_d (rel)     r_g (rel)
+  ------------------------------------------------------------------------------
+  NSred (di_qp)              1.000e+00     3.717e+00     3.165e+01     2.094e+05
+  MOSEK                      1.138e+01     6.275e+06     2.986e+05     7.564e+07
+  Gurobi                     2.220e+01     4.952e+00     1.000e+00     1.000e+00
+  HiGHS                      5.362e+00     1.000e+00     1.146e+00     6.208e+02
+
+  Reference (pass = 1, pcg iters = 14, relres = 8.8e-15, n_lb/n_ub/n_free = 0/0/3375):
+  Solver                  ||u-u_ref||_inf  ||y-y_ref||_inf       f - f_ref
+  ----------------------------------------------------------------------
+  NSred (di_qp)              3.518e-09     4.779e-12     0.000e+00
+  MOSEK                      8.794e-05     3.952e-08     2.319e-14
+  Gurobi                     1.184e-11     4.256e-15    -1.355e-20
+  HiGHS                      1.662e-08     5.961e-12     0.000e+00
+
+
+
+=== n = 31,  N = 29791,  h = 1/32 ===
+
+  Solver                Runtime (s)           r_p     r_p (rel)           r_d     r_d (rel)           r_g     r_g (rel)
+  ---------------------------------------------------------------------------------------------------------------------
+  NSred (di_qp)               3.864      2.50e-18      1.41e-13      6.62e-17      2.33e-12      1.86e-14      2.09e-10
+  MOSEK                     119.938      1.83e-12      1.03e-07      7.34e-12      2.59e-07      6.70e-12      7.52e-08
+  Gurobi                    175.887      3.98e-16      2.24e-11      3.73e-17      1.31e-12      3.73e-16      4.19e-12
+  HiGHS                      30.334      2.79e-19      1.57e-14      1.93e-15      6.80e-11      9.79e-17      1.10e-12
+
+  SGM ratios (relative to best at n = 31):
+  Solver                       Runtime     r_p (rel)     r_d (rel)     r_g (rel)
+  ------------------------------------------------------------------------------
+  NSred (di_qp)              1.000e+00     8.990e+00     1.774e+00     1.898e+02
+  MOSEK                      3.104e+01     6.562e+06     1.970e+05     6.840e+04
+  Gurobi                     4.552e+01     1.430e+03     1.000e+00     3.810e+00
+  HiGHS                      7.850e+00     1.000e+00     5.180e+01     1.000e+00
+
+  Reference (pass = 1, pcg iters = 14, relres = 8.9e-15, n_lb/n_ub/n_free = 0/0/29791):
+  Solver                  ||u-u_ref||_inf  ||y-y_ref||_inf       f - f_ref
+  ----------------------------------------------------------------------
+  NSred (di_qp)              4.317e-09     1.928e-12    -6.776e-21
+  MOSEK                      2.310e-04     5.601e-08     3.364e-13
+  Gurobi                     2.619e-10     3.656e-14     6.776e-21
+  HiGHS                      1.670e-06     1.492e-10     7.996e-19
+
+
+Results saved to /Users/gabrielpl/Claude/research/work_papers/diff_incl/numerics/results/pde_oc_runs/pde_oc_3D_2026-09-17_105235.mat

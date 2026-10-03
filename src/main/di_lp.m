@@ -1,81 +1,51 @@
 function [x,p,fval,flag] = di_lp(A,b,c,x,tol,maxit,nnls_solver)
-%   DI_LP               Differential inclusions approach to solving
-%                       linear programs or certifying unboundedness.
+%   DI_LP           Gradient inclusion solver for linear programs.
 %
-%   This function certifies whether the following feasible linear program
+%   Solves, or certifies unbounded,
 %
-%   (1) min_{x \in \Rn} \langle\bc,\bx\rangle   subject to A*x \leqslant b
+%   (1) min_{x in R^n}  c'*x   subject to  A*x <= b.
 %
-%   is bounded and, if so, outputs an optimal solution.
-%
-%   The differential inclusions approach is a finite-time algorithm that
-%   computes the continuous-time solution of the differential inclusions
-%   associated to a linear program. The solution consists of finitely
-%   many piecewise continuous components calculated from a sequence of
-%   nonnegative least-squares (NNLS) problems.
-%
-%   The main computational cost of this algorithm is the computation of the
-%   NNLS problems. The NNLS solver is supplied as a function handle.
+%   The gradient inclusion trajectory of (1) reaches an optimal vertex in
+%   finitely many pieces.  Each piece costs one NNLS solve on the active
+%   face; that solve dominates the work and is supplied as a handle.
 %
 % -------------------------------------------------------------------------
 %   INPUTS
-%       A           -   (m x n)-dimensional matrix A
-%       b           -   m-dimensional col data vector
-%       c           -   n-dimensional col data vector
-%       x           -   (Optional) Initial feasible point satisfying
-%                       A*x <= b.
-%       tol         -   (Optional) Small number specifying the tolerance
-%                       (e.g., 1e-08). Default value is derived from the
-%                       Frobenius norm of A and the relative size of b.
-%       maxit       -   (Optional) Maximum number of iterations in the
-%                       outer loop. Default is max(1e6,100*n).
-%       nnls_solver -   (Optional) Function handle to an NNLS solver.
-%                       Two calling conventions are supported:
-%                         [q,d]      = solver(M, rhs, tol, p_warm)
-%                         [q,d,veff] = solver(M, rhs, tol, p_warm, v_warm)
-%                       The second form is used when the solver accepts a
-%                       momentum warm-start vector v_warm. The convention
-%                       is detected automatically via nargin(nnls_solver).
-%                       Default is @epgd_lsqnonneg.
+%       A             -   (m x n) constraint matrix.
+%       b             -   m-dimensional column vector.
+%       c             -   n-dimensional cost column vector.
+%       x             -   (Optional) Feasible start, A*x <= b.  Default is
+%                         a point from di_phase1.
+%       tol           -   (Optional) Tolerance.  Default is
+%                         min(1e-8, 100*eps*||A||_F*||b||).
+%       maxit         -   (Optional) Outer iteration cap.  Default is
+%                         max(1e6, 100*n).
+%       nnls_solver   -   (Optional) Handle to an NNLS solver, called as
+%                         [q,d] = solver(M,rhs,tol,p_warm), or as
+%                         [q,d,v] = solver(M,rhs,tol,p_warm,v_warm) when it
+%                         warm-starts the power iteration for ||M||_2;
+%                         nargin picks the form.  Default is @apgd_lsqnonneg.
 %
 %   OUTPUTS
-%       x           -   n-dimensional solution vector to the LP problem.
-%                       If unbounded, returns empty field.
-%       p           -   m-dimensional dual solution vector. If infeasible,
-%                       returns empty field.
-%       fval        -   Value of the objective function.
-%       flag        -   Returns 0 if x is infeasible or the problem is
-%                       unbounded, returns -1 if the outer loop reached
-%                       maxit iterations (tolerance issue or exponential
-%                       behavior), and returns 1 if successful.
+%       x             -   Optimal solution; empty if infeasible or
+%                         unbounded.
+%       p             -   m-dimensional dual; empty if infeasible.
+%       fval          -   Objective value at x.
+%       flag          -   1 converged, 0 infeasible or unbounded,
+%                         -1 reached maxit.
 %
 % -------------------------------------------------------------------------
 %   QUICK EXAMPLE
-      % % Generate the data
-      % m = 500;
-      % n = 1000;
-      % x0     = randn(n, 1);
-      % A      = randn(m, n);
-      % s      = abs(randn(m, 1)) + 1;
-      % b      = A * x0 + s;
-      % lambda = abs(randn(m, 1)) + 1;  % strictly positive dual variable
-      % c      = -A' * lambda;
-      % 
-      % tol = 1e-08;
-      % 
-      % % Boundary point via ray casting from x0
-      % d  = randn(n, 1);
-      % Ad = A * d;
-      % idx = Ad > 0;
-      % t  = min(s(idx) ./ Ad(idx));  % largest feasible step
-      % x1 = x0 + t * d;
-      % 
-      % [x_linprog,fval_lp] = linprog(c,A,b);
-      % [x_di,~,fval_di,~]  = di_lp(A,b,c,x0,tol,[],@epgd_lsqnonneg);
-      % 
-      % disp(['   <c,x_linprog - x_di> = ', ...
-      %     num2str(fval_lp - fval_di), ', achieved with tolerance = ', ...
-      %     num2str(tol)])
+      % rng(1);
+      % m = 500;  n = 1000;
+      % x0 = randn(n,1);
+      % A  = randn(m,n);
+      % b  = A*x0 + abs(randn(m,1)) + 1;
+      % c  = -A' * (abs(randn(m,1)) + 1);      % bounded below
+      %
+      % [~, fval_lp]        = linprog(c, A, b);
+      % [~, ~, fval_di, ~]  = di_lp(A, b, c, x0, 1e-8);
+      % fprintf('fval gap: %e\n', abs(fval_lp - fval_di))
 %
 % -------------------------------------------------------------------------
 
@@ -126,8 +96,10 @@ end
 if nargin < 4 || isempty(x)
     [x, flag_feas] = di_phase1(A, b, tol, maxit, nnls_solver);
     if((flag_feas == 0) || (flag_feas == -1))
-        fprintf('The linear program is infeasible within tolerance.')
-        x = [];
+        fprintf('The linear program is infeasible within tolerance.\n')
+        x    = [];
+        p    = [];
+        fval = [];
         flag = 0;
         return;
     end
@@ -141,23 +113,23 @@ flag = 1;
 A_times_x = A*x;
 residual = b - A_times_x;
 if any(-residual > tol)
-    fprintf('The initial point is infeasible within tolerance.')
-    x = [];
+    fprintf('The initial point is infeasible within tolerance.\n')
+    x    = [];
+    p    = [];
+    fval = [];
     flag = 0;
     return;
 end
 
 
 %% Preconditioning
-% Ruiz equilibration: 10 steps of simultaneous row/column inf-norm scaling.
-% Produces d1 (m x 1) and d2 (n x 1) such that diag(d1)*A*diag(d2) has all
-% row and column inf-norms near 1. The change of variables x = diag(d2)*x_hat
-% transforms the LP to min c_hat'*x_hat s.t. A_hat*x_hat <= b_hat, with
-% A_hat = diag(d1)*A*diag(d2), b_hat = d1.*b, c_hat = d2.*c.
-% The dual variable transforms as p = diag(d1)*p_hat.
+% Ruiz equilibration: 10 sweeps of row/column inf-norm scaling, giving d1
+% and d2 with diag(d1)*A*diag(d2) of inf-norms near 1.  Under x = diag(d2)*xh
+% the LP becomes min (d2.*c)'*xh s.t. diag(d1)*A*diag(d2)*xh <= d1.*b, and
+% the dual maps back as p = diag(d1)*ph.
 %
-% Reference: Ruiz, Daniel. A scaling algorithm to equilibrate both rows and 
-% columns norms in matrices. No. RAL-TR-2001-034. CM-P00040415, 2001.
+% Reference: D. Ruiz, A scaling algorithm to equilibrate both rows and
+% columns norms in matrices, RAL-TR-2001-034, 2001.
 %
 d1 = ones(m, 1);
 d2 = ones(n, 1);

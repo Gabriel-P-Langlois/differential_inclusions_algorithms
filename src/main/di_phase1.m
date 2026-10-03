@@ -1,58 +1,39 @@
 function [x, flag] = di_phase1(A, b, tol, maxit, nnls_solver)
-%   DI_PHASE1           Differential inclusions approach to finding a
-%                       feasible point for a linear inequality system, or
-%                       certifying infeasibility.
+%   DI_PHASE1       Feasible point for a linear inequality system, or a
+%                   certificate that none exists.
 %
-%   Given a constraint matrix A and data vector b, this function determines
-%   whether the system
+%   Reduces feasibility of A*x <= b to the Phase I linear program
 %
-%   (1)     A*x <= b
+%   (1) min_{x in R^n, t in R}  t   s.t.  A*x - t*1 <= b,  -t <= 0,
 %
-%   is feasible and, if so, returns a feasible point x.
-%
-%   The approach reduces the feasibility problem to the Phase I linear
-%   program
-%
-%   (2) min_{x in R^n, t in R} t   subject to A*x - t*1 <= b,  -t <= 0,
-%
-%   which is solved via di_lp. The system (1) is feasible if and only if
-%   the optimal value of (2) is at most zero.
+%   solved by di_lp.  The system is feasible if and only if the optimal
+%   value of (1) is at most zero.
 %
 % -------------------------------------------------------------------------
 %   INPUTS
-%       A           -   (m x n)-dimensional matrix
-%       b           -   m-dimensional col data vector
-%       tol         -   (Optional) Tolerance. Default is derived from the
-%                       Frobenius norm of A and the relative size of b.
-%       maxit       -   (Optional) Maximum number of outer iterations for
-%                       di_lp. Default is max(1e6, 100*(n+1)).
-%       nnls_solver -   (Optional) Function handle to an NNLS solver,
-%                       passed directly to di_lp. Default is
-%                       @epgd_lsqnonneg.
+%       A             -   (m x n) constraint matrix.
+%       b             -   m-dimensional column vector.
+%       tol           -   (Optional) Tolerance.  Default is
+%                         min(1e-8, 100*eps*||A||_F*||b||).
+%       maxit         -   (Optional) Outer iteration cap for di_lp.
+%                         Default is max(1e6, 100*(n+1)).
+%       nnls_solver   -   (Optional) Handle passed straight to di_lp.
+%                         Default is @apgd_lsqnonneg.
 %
 %   OUTPUTS
-%       x           -   n-dimensional feasible point satisfying A*x <= b,
-%                       or empty if infeasible or if the outer loop
-%                       reached maxit.
-%       flag        -   Returns 1 if a feasible point is found, 0 if the
-%                       system is infeasible, and -1 if the outer loop of
-%                       di_lp reached maxit without converging.
+%       x             -   Feasible point; empty if the system is infeasible
+%                         or if di_lp reached maxit.
+%       flag          -   1 feasible, 0 infeasible, -1 di_lp reached maxit.
 %
 % -------------------------------------------------------------------------
 %   QUICK EXAMPLE
-      % % Generate the data
-      % m = 500;
-      % n = 1000;
-      % x0 = randn(n, 1);
-      % A  = randn(m, n);
-      % s  = abs(randn(m, 1)) + 1;
-      % b  = A * x0 + s;
+      % rng(1);
+      % m = 500;  n = 1000;
+      % A = randn(m,n);
+      % b = A*randn(n,1) + abs(randn(m,1)) + 1;
       %
       % [x, flag] = di_phase1(A, b);
-      %
-      % tol = min(1e-08, 100*eps*max(norm(A,'fro'),1)*max(norm(b),1));
-      % assert(flag == 1)
-      % assert(all(A*x <= b + tol))
+      % assert(flag == 1 && all(A*x <= b + 1e-8))
 %
 % -------------------------------------------------------------------------
 

@@ -1,0 +1,73 @@
+=== dx = 2^-7  (N = 16384) ===
+  Instance: 4.6875% negative point values (delta = 0.05), rhat = 768, theta_hat = 1.3526 rad, c = 0.5000, lambda = 1.3763
+  Reference: |1'x_ref - 1'w| = 5.91e-11, min(x_ref) - m = 0.00e+00, 6912 of 16384 points on the lower bound
+  Arm          mean time (s)  its/solve    err vs ref   |1'x - 1'w|    min(x) - m  notes
+  ----------------------------------------------------------------------------------------------------------
+  DR              1.9464e-03        17      4.05e-14      4.22e-10     +0.00e+00  iterations; 0 at maxit
+  di_pos_w        1.3874e-03        13      1.55e-15      7.37e-11     +0.00e+00  breakpoints; flag 1
+  LHTZ Table 3, Algorithm DR: 9.048e-03 s per solve (Xeon E5-2660 v3, a different machine)
+
+=== dx = 2^-8  (N = 65536) ===
+  Instance: 5.4688% negative point values (delta = 0.05), rhat = 3584, theta_hat = 1.3348 rad, c = 0.5000, lambda = 1.3838
+  Reference: |1'x_ref - 1'w| = 2.73e-09, min(x_ref) - m = 0.00e+00, 28160 of 65536 points on the lower bound
+  Arm          mean time (s)  its/solve    err vs ref   |1'x - 1'w|    min(x) - m  notes
+  ----------------------------------------------------------------------------------------------------------
+  DR              2.0374e-03        17      9.54e-14      4.33e-10     +0.00e+00  iterations; 0 at maxit
+  di_pos_w        2.0783e-03        25      6.44e-15      2.28e-09     +0.00e+00  breakpoints; flag 1
+  LHTZ Table 3, Algorithm DR: 3.068e-02 s per solve (Xeon E5-2660 v3, a different machine)
+
+=== dx = 2^-9  (N = 262144) ===
+  Instance: 5.0781% negative point values (delta = 0.05), rhat = 13312, theta_hat = 1.3435 rad, c = 0.5000, lambda = 1.3801
+  Reference: |1'x_ref - 1'w| = 8.00e-10, min(x_ref) - m = 0.00e+00, 109568 of 262144 points on the lower bound
+  Arm          mean time (s)  its/solve    err vs ref   |1'x - 1'w|    min(x) - m  notes
+  ----------------------------------------------------------------------------------------------------------
+  DR              6.1301e-03        17      1.78e-14      1.94e-09     +0.00e+00  iterations; 0 at maxit
+  di_pos_w        5.9949e-03        48      3.55e-15      2.76e-10     +0.00e+00  breakpoints; flag 1
+  LHTZ Table 3, Algorithm DR: 1.029e-01 s per solve (Xeon E5-2660 v3, a different machine)
+
+=== dx = 2^-10  (N = 1048576) ===
+  Instance: 4.8828% negative point values (delta = 0.05), rhat = 51200, theta_hat = 1.3480 rad, c = 0.5000, lambda = 1.3782
+  Reference: |1'x_ref - 1'w| = 4.06e-08, min(x_ref) - m = 0.00e+00, 436224 of 1048576 points on the lower bound
+  Arm          mean time (s)  its/solve    err vs ref   |1'x - 1'w|    min(x) - m  notes
+  ----------------------------------------------------------------------------------------------------------
+  DR              3.0236e-02        17      5.43e-14      7.28e-09     +0.00e+00  iterations; 0 at maxit
+  di_pos_w        2.4878e-02        95      6.01e-14      3.43e-09     +0.00e+00  breakpoints; flag 1
+  LHTZ Table 3, Algorithm DR: 5.979e-01 s per solve (Xeon E5-2660 v3, a different machine)
+
+=== dx = 2^-11  (N = 4194304) ===
+  Instance: 4.9805% negative point values (delta = 0.05), rhat = 208896, theta_hat = 1.3457 rad, c = 0.5000, lambda = 1.3791
+  Reference: |1'x_ref - 1'w| = 1.75e-07, min(x_ref) - m = 0.00e+00, 1757184 of 4194304 points on the lower bound
+  Arm          mean time (s)  its/solve    err vs ref   |1'x - 1'w|    min(x) - m  notes
+  ----------------------------------------------------------------------------------------------------------
+  DR              1.3468e-01        17      5.68e-14      3.80e-08     +0.00e+00  iterations; 0 at maxit
+  di_pos_w        1.0783e-01       190      7.27e-14      2.56e-09     +0.00e+00  breakpoints; flag 1
+  LHTZ Table 3, Algorithm DR: 2.705e+00 s per solve (Xeon E5-2660 v3, a different machine)
+
+=== Table 1: mean time (s) of one solve over 100 timed solves, tic/toc ===
+  dx                     2^-7         2^-8         2^-9        2^-10        2^-11
+  N                     16384        65536       262144      1048576      4194304
+  -------------------------------------------------------------------------------
+  DR                1.946e-03    2.037e-03    6.130e-03    3.024e-02    1.347e-01
+  di_pos_w          1.387e-03    2.078e-03    5.995e-03    2.488e-02    1.078e-01
+  LHTZ T3           9.048e-03    3.068e-02    1.029e-01    5.979e-01    2.705e+00
+  (LHTZ Table 3: average time of one solve of Algorithm DR on an Intel Xeon E5-2660 v3, a different machine.)
+
+=== Table 2: accuracy ===
+  ||x - x_ref||_inf, x_ref from limiter_exact_w (bisection, independent of the solvers)
+  dx                     2^-7         2^-8         2^-9        2^-10        2^-11
+  N                     16384        65536       262144      1048576      4194304
+  -------------------------------------------------------------------------------
+  DR                 4.05e-14     9.54e-14     1.78e-14     5.43e-14     5.68e-14
+  di_pos_w           1.55e-15     6.44e-15     3.55e-15     6.01e-14     7.27e-14
+
+  Conservation residual |1'x - 1'w|
+  dx                     2^-7         2^-8         2^-9        2^-10        2^-11
+  N                     16384        65536       262144      1048576      4194304
+  -------------------------------------------------------------------------------
+  DR                 4.22e-10     4.33e-10     1.94e-09     7.28e-09     3.80e-08
+  di_pos_w           7.37e-11     2.28e-09     2.76e-10     3.43e-09     2.56e-09
+  reference          5.91e-11     2.73e-09     8.00e-10     4.06e-08     1.75e-07
+
+  Largest bound violation max(0, m - min(x)) over all methods and dx: 0.00e+00
+
+Results saved to /Users/gabrielpl/Claude/research/work_papers/diff_incl/numerics/results/pos_synthetic_runs/pos_synthetic_2026-09-16_094043.mat

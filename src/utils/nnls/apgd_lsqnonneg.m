@@ -1,65 +1,43 @@
 function [xk,d,v] = apgd_lsqnonneg(A,b,tol,xk,v)
-%   APGD_LSQNONNEG  Accelerated Projected Gradient Descent iterative
-%                   approach to solving the nonnegative least-squares
-%                   (NNLS) problem.
-% 
-%   This function computes an optimal solution to the NNLS problem
-%                       
-%       min_{x \in \Rn} (1/2)\|A*x - b\|_2^2   subject to x \geqslant 0
+%   APGD_LSQNONNEG  Accelerated projected gradient descent for nonnegative
+%                   least squares.
 %
-%   via the accelerated projected gradient descent \w restart. This is 
-%   algorithm 4.2 of IMPROVING ``FAST ITERATIVE SHRINKAGE-THRESHOLDING
-%   ALGORITHM"": FASTER, SMARTER, AND GREEDIER by JINGWEI LIANG\dagger, 
-%   TAO LUO\ddagger AND CAROLA-BIBIANE SCHOENLIEB with p=q=1, r=4, \xi = 1.
+%   Solves
+%
+%   (1) min_{x in R^n}  (1/2)*||A*x - b||^2   subject to  x >= 0
+%
+%   by projected gradient descent with momentum and gradient restart:
+%   Algorithm 4.2 of Liang, Luo, and Schoenlieb, "Improving FISTA: faster,
+%   smarter, and greedier", with p = q = 1, r = 4, xi = 1.  The method is
+%   iterative, not active set, and each iteration costs two matrix-vector
+%   products, the dominant work.
 %
 % -------------------------------------------------------------------------
 %   INPUTS
-%       A       -   (m x n)-dimensional matrix A
-%       b       -   m-dimensional col data vector.
-%       tol     -   (Optional) small number specifying 
-%                   the tolerance (e.g., 1e-08). Default value
-%                   is derived from the Frobenius norm of A
-%                   and the relative size of b.
-%       xk      -   (Optional) Initial feasible point xk >= 0.
-%       v       -   (Optional) Initial estimate of the vector for computing
-%                   the Lipschitz constant L.
+%       A             -   (m x n) matrix.
+%       b             -   m-dimensional column vector.
+%       tol           -   (Optional) Tolerance.  Default is derived from
+%                         ||A||_F and the size of b.
+%       xk            -   (Optional) Feasible start, xk >= 0.
+%       v             -   (Optional) Warm start for the power iteration
+%                         that estimates the Lipschitz constant L.
 %
 %   OUTPUTS
-%       xk      -   n-dimensional solution vector to the NNLS problem.
-%       d       -   m-dimensional col residual vector d = A*xk - b.
-%       v       -   Singular vector of A at the largest singular value.
+%       xk            -   Solution vector.
+%       d             -   m-dimensional residual d = A*xk - b.
+%       v             -   Singular vector of A at its largest singular
+%                         value, to warm-start the next call.
 %
 % -------------------------------------------------------------------------
 %   QUICK EXAMPLE
-%       % Global parameters
-%       rng(1);
-%       tol = 1e-8;
-%       m = 200;
-%       n = 2000;
-%
-%       % Generate random Gaussian data
-%       A = randn(m,n);
-%       b = randn(m,1);
-%
-%       % Compare MATLAB's default lsqnonneg vs apgd_lsqnonneg
-%       tic
-%       [x_default,rnorm,residual] = lsqnonneg(A,b);
-%       time_default = toc;
-%
-%       tic
-%       [x_apgd,d] = apgd_lsqnonneg(A,b);
-%       time_apgd = toc;
-%
-%       % Compute the \ell_{\inf} error between the residuals A*x - b
-%       % obtained from lsqnonneg and apgd_lsqnonneg.
-%       abs_error_res = norm(-d - residual,'inf');
-%
-% -------------------------------------------------------------------------
-%   NOTES
-%       1) This is an iterative algorithm, not an exact or active-set one.
-%
-%       2) Each iteration makes two matrix-vector multiplications; this is
-%       the dominant cost of the algorithm.
+      % rng(1);
+      % m = 200;  n = 2000;
+      % A = randn(m,n);
+      % b = randn(m,1);
+      %
+      % [~, ~, res_ml] = lsqnonneg(A, b);
+      % [~, d]         = apgd_lsqnonneg(A, b, 1e-8);
+      % fprintf('residual gap: %e\n', norm(d + res_ml, 'inf'))
 %
 % -------------------------------------------------------------------------
 
@@ -110,6 +88,10 @@ kmax = 50000;
 [L,v] = warm_normest(A,v,n);
 tau = 1/L^2;
 
+% Optimality threshold for the KKT (projected-gradient) test below, relative
+% to the scale of the data term A'*b.
+tol_pg = tol*max(1, norm(Atb));
+
 % Main loop
 xkm = xk;
 tk = 1.0;
@@ -132,10 +114,20 @@ for k = 1:1:kmax
         tkp = 1.0;
     end
 
-    % Check for convergence. If so, move on to the postprocessing part.
+    % Check for convergence.  A short step is necessary but NOT sufficient:
+    % from a warm start the first step can fall below the threshold with the
+    % KKT residual still large, and this solver would return its own input.
+    % Every caller warm-starts from the previous multipliers, so accept only
+    % when the projected gradient certifies optimality as well.
     if(norm(xkp-xk) < tol*(1+norm(xkp)))
-        xk = xkp;
-        break;
+        g   = A.'*(A*xkp) + Atb;
+        idx = (xkp <= 0);
+        pg  = g;
+        pg(idx) = min(0, g(idx));
+        if(norm(pg) <= tol_pg)
+            xk = xkp;
+            break;
+        end
     end
 
     % Update for the next iterate
@@ -151,9 +143,9 @@ end
 
 %% Utility functions
 
-% Estimate the Lipschitz constant of the matrix A via MATLAB's normest
-% function, which is here tailored to accept a warm start.
 function [L,v] = warm_normest(A,v,n)
+%   WARM_NORMEST  Estimate the Lipschitz constant of A by power iteration,
+%   MATLAB's normest tailored to accept a warm start.
 e = norm(v);
 if(e < 1e-06)
     v = randn(n,1);
@@ -180,9 +172,8 @@ end
 L = e;
 end
 
-% Postprocess the solution of the NNLS problem on its active set
-% using MATLAB's LSQR solver.
 function [xk,d] = postprocess_sol(A,b,xk,eqcset)
+%   POSTPROCESS_SOL  Polish the NNLS solution on its free face via lsqr.
     warning('off', 'MATLAB:lsqr:tooSmallTolerance')
     xk(~eqcset) = 0;
     [xk(eqcset),~] = lsqr(A(:,eqcset),b,eps,1000,[],[],xk(eqcset));

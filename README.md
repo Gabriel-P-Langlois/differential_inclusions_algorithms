@@ -1,76 +1,101 @@
-# Numerical Code — Gradient Inclusions for Linear and Convex Quadratic Programs
+# Continuous-time analysis and algorithms for linear and convex quadratic programs via exactly solvable differential inclusions
 
-MATLAB code accompanying the paper "Gradient Inclusions for Linear and Convex Quadratic Programs" by G. P. Langlois and J. Darbon.
+Gabriel P. Langlois, Akwum Onwunta, and Jérôme Darbon
 
-## Directory structure
+This repository holds the MATLAB code of the paper's numerical experiments (Section 6): the solvers of Algorithms 1 and 2, the four experiment drivers, and the saved runs from which the paper's tables and figures were made.
 
-```
-numerics/
-├── src/
-│   ├── main/          # DI solvers
-│   └── utils/
-│       ├── nnls/      # NNLS sub-solvers
-│       └── prox/      # Proximal operators (auxiliary)
-├── test/
-│   ├── lp/            # LP correctness and speed tests
-│   ├── nnls/          # NNLS solver correctness tests
-│   ├── qp/            # QP correctness tests and PDE-constrained benchmarks
-│   └── rlp/           # Regularized LP tests
-└── results/           # Saved output (figures, .mat files) from benchmark scripts
+## Requirements
+
+- MATLAB. We used R2025b on an Apple M3 with 16 GB of RAM. No toolbox is required.
+- Optional, for the comparisons of Section 6.2: [MOSEK](https://www.mosek.com) 11.2, [Gurobi](https://www.gurobi.com) 13.0.2, and [HiGHS](https://highs.dev) 1.14.0 through the MATLAB interface [HiGHSMEX](https://github.com/savyasachi/HiGHSMEX) 1.4.0. MOSEK and Gurobi need a license, free for academic use. A driver skips any solver it cannot find.
+
+The two drivers of Section 6.2 look for the optional solvers here; edit the `%% Paths` block at the top of each driver to match your installation:
+
+```matlab
+p_mosek  = fullfile(getenv('HOME'), 'mosek', '11.2', 'toolbox', 'r2022b');
+p_gurobi = '/Library/gurobi1302/macos_universal2/matlab';
+p_highs  = fullfile(getenv('HOME'), 'HiGHSMEX');
 ```
 
-## Main solvers (`src/main/`)
+## Repository layout
 
-| File | Description |
-|---|---|
-| `di_lp.m` | DI solver for LP; accepts any NNLS solver via function handle |
-| `di_rlp.m` | DI solver for L2-regularized LP: min (t/2)\|\|x\|\|² + c'x s.t. Ax ≤ b, t > 0 (Algorithm 1, finite-time) |
-| `di_qp.m` | DI solver for convex QP with SPD Q (Algorithm 2); Q may be a matrix or a function handle |
-| `di_qp_eq.m` | DI solver for min (1/2)x'Qx + c'x s.t. Ax ≤ b, Ex = f; equality constraints handled via null-space projection |
-| `di_phase1.m` | Feasibility phase; solves an augmented LP via `di_lp` |
+```
+src/
+  main/
+    di_pos_w.m        Algorithm 1 for the weighted limiter QP (Section 6.1)
+    di_qp.m           Algorithm 2 (minimal selection descent), SPD Q
+    di_lp.m           Algorithm 1 with t = 0, i.e. linear programs
+    di_phase1.m       feasible starting point, called by di_qp and di_lp
+  utils/
+    ipm_tolerances.m  tolerances of MOSEK, Gurobi, and HiGHS
+    nnls/             NNLS subproblem solvers: box_lsqnonneg (used in
+                      Section 6.2), apgd_lsqnonneg (default of di_qp, di_lp)
+    limiter/          limiter QP: DR algorithm, starting point, reference
+    dg/               discontinuous Galerkin solver of Section 6.1.2
+    pde_oc/           optimal control problems of Section 6.2
+results/
+  benchmark_*.m       experiment drivers, one per subsection of Section 6
+  make_*.m            write the tables and figures from the saved runs
+  pos_synthetic_runs/ pos_PDE_runs/ pde_oc_runs/   saved runs (.mat, .log)
+  tables/             LaTeX table rows, as in the paper
+  figures/            PDF figures, as in the paper
+```
 
-## NNLS sub-solvers (`src/utils/nnls/`)
+## Running the experiments
 
-These implement `min_{q >= 0} (1/2)||Aq - b||²` and are passed as function handles to the main solvers.
+Each driver adds the paths it needs. Run it from MATLAB in `results/`:
 
-| File | Method |
-|---|---|
-| `epgd_lsqnonneg.m` | Exact projected gradient descent (exact line search); warm-start capable |
-| `apgd_lsqnonneg.m` | FISTA with gradient restart; warm-start capable |
-| `pgd_lsqnonneg.m` | Projected gradient descent (fixed step) |
-| `hinges_lsqnonneg.m` | Method of hinges (Mayer); LSQR postprocess for large sparse problems |
-| `pcg_lsqnonneg.m` | Gradient projection CG (Moré–Toraldo 1991) |
-| `lbfgs_lsqnonneg.m` | L-BFGS (not recommended for poorly-scaled sparse data) |
+| Section | Experiment | Command | Run time on our machine |
+|---|---|---|---|
+| 6.1.1 | Limiter QP on synthetic data | `benchmark_pos_synthetic` | 33 s |
+| 6.1.2 | Limiter in a DG scheme | `benchmark_pos_PDE` | about 15 h |
+| 6.2.1 | 3D Poisson optimal control | `benchmark_pde_oc_3D` | 1 h 16 min |
+| 6.2.2 | 2D heat optimal control | `benchmark_pde_oc_2D` | 4 h 13 min |
 
-## Tests and benchmarks (`test/`)
+The run times come from the time stamps of the saved runs and include all solvers.
 
-### NNLS (`test/nnls/`)
-- `test_nnls.m` — correctness of all NNLS solvers (`epgd`, `apgd`, `pgd`, `hinges`, `lbfgs`, `pcg`) on dense small data
-- `test_nnls_dense.m` — dense data regression for `epgd`, `apgd`, and `lbfgs`
-- `test_nnls_sparse.m` — sparse data regression for `epgd`, `apgd`, and `lbfgs`
+Each driver saves its results in its folder under `results/` after every mesh or grid. Then write the tables and figures:
 
-### LP (`test/lp/`)
-- `test_lp.m` — correctness of `di_lp` with all six NNLS solvers
-- `test_lp_speed.m` — timing comparison (`apgd`, `lbfgs`, `pcg`)
-- `test_phase1.m` — correctness of `di_phase1` (feasible and infeasible cases)
+```matlab
+make_pos_tables;           make_pos_figures             % Section 6.1
+make_pde_oc_tables('3D');  make_pde_oc_figures('3D')    % Section 6.2.1
+make_pde_oc_tables('2D');  make_pde_oc_figures('2D')    % Section 6.2.2
+```
 
-### QP (`test/qp/`)
-- `test_qp.m` — correctness of `di_qp` vs `quadprog` (m=100, n=200, SPD Q)
-- `test_qp_fun_handle.m` — verifies that a function-handle Q agrees with the explicit matrix form
-- `test_qp_eq.m` — correctness of `di_qp_eq`; checks all four KKT conditions
+These scripts read the newest run in each folder and write to `results/tables/` and `results/figures/`. To rebuild the paper's tables and figures without running the experiments, call them on the saved runs that ship with the repository.
 
-**PDE-constrained benchmarks** (Poisson optimal control, Pearson & Gondzio 2017):
+| Section | Saved run | Tables | Figures |
+|---|---|---|---|
+| 6.1.1 | `pos_synthetic_runs/pos_synthetic_2026-09-16_094043` | `pos_synth_time`, `pos_synth_acc` | `pos_synthetic_time` |
+| 6.1.2 | `pos_PDE_runs/k*_n*_{dipos,dr}` | `pos_dg` | — |
+| 6.2.1 | `pde_oc_runs/pde_oc_3D_2026-09-17_105235` | `pde_oc_3D_pair{1,2}_{time,acc,paper}` | `pde_oc_3D_pair{1,2}_time` |
+| 6.2.2 | `pde_oc_runs/pde_oc_2D_2026-09-17_230708` | `pde_oc_2D_pair{1,2}_{time,acc,paper}` | `pde_oc_2D_pair{1,2}_time` |
 
-| File | Problem | Desired state | Constraints | Mass matrix |
-|---|---|---|---|---|
-| `benchmark_pde_oc_2D_I.m` | 2D, single mesh (n=32) | Gaussian bump | control only | lumped (h²I) |
-| `benchmark_pde_oc_2D_II.m` | 2D, single mesh (n=32) | sin(πx₁)sin(πx₂) | state only | lumped (h²I) |
-| `benchmark_pde_oc_2D_III.m` | 2D, mesh sweep n∈{16,32,48,64} | sin(πx₁)sin(πx₂) | state only | lumped (h²I) |
-| `benchmark_pde_oc_3D_I.m` | 3D, mesh sweep | Gaussian bump | control only | consistent Q1 |
+A new run of `benchmark_pos_PDE` overwrites the files in `pos_PDE_runs/`; the other drivers add a dated run next to the saved one.
 
-All benchmarks compare `di_qp_eq` (direct Cholesky) against MOSEK. The 2D benchmarks also include `quadprog`. `benchmark_pde_oc_3D_I.m` additionally compares `di_qp` applied to the null-space-reduced u-only QP (equality constraint K*y = M_c*u eliminated by substituting y = K⁻¹M_c*u). Reference: Pearson & Gondzio (2017), *Numer. Math.* 137:959–999.
+## Data not stated in the source papers
 
-The stiffness matrix K is identical across all benchmarks and matches the IFISS-assembled matrix from the paper. `benchmark_pde_oc_3D_I.m` uses the consistent Q1 mass matrix M_c = M1D ⊗ M1D ⊗ M1D, matching the paper's discretization; the 2D benchmarks use the row-sum lumped mass M = hᵈI. The two discretizations agree to O(h²).
+The experiments follow Liu, Hu, Taitano, and Zhang (Section 6.1) and Pearson and Gondzio (Section 6.2). Where these papers leave a datum unstated, we chose it. The header of each driver lists every such choice and its source; the main ones are:
 
-### RLP (`test/rlp/`)
-- `test_rlp.m` — correctness of `di_rlp` vs `quadprog`; includes KKT checks
+- Section 6.1.1: the grid points are the lower-left cell corners, and δ = 0.05.
+- Section 6.1.2: h = Δx in both the penalty and the norm of the DR stopping rule; Δτ = 19/119 for k = 3 and n = 64, since their Δτ = 0.16 does not split the time interval [1, 20] into whole steps; ε = 0 in the Zhang–Shu limiter.
+- Section 6.2.1: assumptions A1–A3 (boundary condition, grid, desired-state term).
+- Section 6.2.2: assumptions A1–A5 (domain, boundary and initial conditions, desired state with amplitude 0.5, desired-state term, grid), and Δτ = 0.02.
+
+## References
+
+- C. Liu, J. Hu, W. T. Taitano, and X. Zhang, An optimization-based positivity-preserving limiter in semi-implicit discontinuous Galerkin schemes solving Fokker–Planck equations, Comput. Math. Appl. 192 (2025), 54–71.
+- J. W. Pearson and J. Gondzio, Fast interior point solution of quadratic programming problems arising from PDE-constrained optimization, Numer. Math. 137 (2017), 959–999.
+- IFISS 3.6, whose Q1 grid and desired-state conventions the drivers of Section 6.2 follow.
+
+## Citation
+
+A BibTeX entry will be added once the paper is available.
+
+## Disclaimer
+
+We wrote this code with the assistance of Claude (Anthropic), an AI model. It may contain minor deviations from the paper.
+
+## License
+
+Released under the MIT License; see `LICENSE`.
